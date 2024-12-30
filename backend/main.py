@@ -2,8 +2,26 @@ from fastapi import FastAPI, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
+import uvicorn
 from crew import ResumeEvaluationCrew
-from config.settings import settings
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Environment settings
+ENV = os.getenv("ENV", "development")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# Server settings
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", 5000))
+
+# CORS settings
+FRONTEND_URL_DEV = os.getenv("FRONTEND_URL_DEV", "http://localhost:5173")
+FRONTEND_URL_PROD = os.getenv("FRONTEND_URL_PROD", "https://your-production-frontend-url.com")
+CORS_ORIGINS = [FRONTEND_URL_DEV] if ENV == "development" else [FRONTEND_URL_PROD]
 
 app = FastAPI(
     title="Resume Analyzer API",
@@ -14,12 +32,13 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Directory settings
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMP_DIR = os.path.join(BASE_DIR, "temp")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
@@ -98,12 +117,17 @@ async def analyze_resume(
         print("Outer error:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 5000))
+def run_server():
+    """Run the FastAPI server"""
     uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=port,
-        reload=settings.env == "development"
+        app,
+        host=HOST,
+        port=PORT,
+        reload=ENV == "development"
     )
+
+if __name__ == "__main__":
+    print("Starting Resume Analyzer API...")
+    print(f"Environment: {ENV}")
+    print(f"Server running at http://{HOST}:{PORT}")
+    run_server()
