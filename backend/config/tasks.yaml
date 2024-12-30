@@ -1,0 +1,73 @@
+job_description_extraction_task:
+  description: >
+    Extract all relevant details from the provided Job Description (JD) PDF file.
+    Focus only on the explicitly mentioned content, such as the Job Title, Responsibilities,
+    Qualifications, and any other sections.
+    Avoid making any assumptions or additions.
+  expected_output: >
+    A well-structured JSON file containing only the raw information from the JD PDF.
+
+job_description_analysis_task:
+  description: >
+    Organize the extracted JD information from job_description_extraction_task, into a structured JSON format.
+    Categorize the content into Job Title, Description, Responsibilities, Qualifications Required, and Miscellaneous.
+    Ensure that the output is strictly based on the extracted information and does not include any inferred or additional data.
+  expected_output: >
+    A structured JSON file containing categorized job description content strictly derived from the provided JD.
+
+resume_extraction_task:
+  description: >
+    Extract critical details from the provided resume PDF file.
+    Ensure that the extracted information accurately reflects the candidate's background, skills, and experience.
+    Avoid adding any information not present in the resume.
+  expected_output: >
+    A comprehensive text file containing raw extracted details from the resume.
+
+analyze_user_input:
+  description: Analyze the additional user input text provided at {user_input_text}
+    to identify relevant skills or experiences that could enhance the resume evaluation.
+  expected_output: A summary of the relevant information extracted from the user input,
+    highlighting any additional skills or experiences.
+
+resume_user_input_analysis_task:
+  description: >
+    Combine the extracted information from the resume and user input for
+    comprehensive analysis, preparing it for evaluation against the job description
+    Categorize the content into different headers and add all the essential details from the extracted information.
+  expected_output: >
+    A JSON object containing structured resume data derived solely from the provided input.
+
+evaluation_task:
+  description: >
+    Evaluate the compatibility of the candidate's resume with the provided job description.
+    Score (on a scale of 1-10) the resume based solely on its alignment with the job description in terms of responsibilities, qualifications, and key skills. At last, give overall score also (on a scale of 1-10).
+    Provide a detailed evaluation statement (not more than 50-100 words) summarizing the findings,
+    ensuring no assumptions or unsupported data are included. Also, roughly give the overall probability of the resume's
+    compatibility with the job description.
+  expected_output: >
+    Provide the markdown file containing:
+    - "Score": A detailed breakdown of the resume's alignment with the JD in terms of numerical scores only, no statement needed in this section.
+    - "Statement": A summary of the evaluation, strictly based on the provided inputs and numerical scores you give.
+
+advisor_task:
+  description: >
+    Provide suggestions to improve the candidate's resume based on its alignment with the provided job description.
+    Base your suggestions exclusively on the gaps identified in the extracted and analyzed data.
+    Avoid adding any information or advice that is not supported by the provided inputs.
+  expected_output: >
+    Provide a structured markdown file containing a list of actionable suggestions for improving the resume.
+
+user_interface_task:
+  description: >
+    Present the evaluation results and improvement suggestions in a clear and concise format.
+    Ensure the output contains:
+    - Evaluation Score: Numerical representation of compatibility.
+    - Evaluation Statement: Summary of evaluation findings.
+    - Suggestions: Tailored recommendations for improvement.
+    The output must strictly adhere to the data provided by the evaluation and advisor tasks without
+    including any additional or inferred information.
+  expected_output: >
+    provide a structured JSON file with:
+    - "Evaluating Score": Numerical score.
+    - "Evaluating Statement": Summary of the evaluation.
+    - "Suggestions": Improvement recommendations (in not more than 5 major points).
