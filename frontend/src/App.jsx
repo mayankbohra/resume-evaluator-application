@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import FileUpload from './components/FileUpload';
 import AdditionalInfo from './components/AdditionalInfo';
 import LoadingState from './components/LoadingState';
@@ -15,6 +15,18 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Test backend connection
+    fetch(`${import.meta.env.VITE_BACKEND_API_URL}/health`)
+      .then(response => response.json())
+      .then(data => {
+        console.log('Backend health check:', data);
+      })
+      .catch(error => {
+        console.error('Backend connection error:', error);
+      });
+  }, []);
 
   const handleFileChange = (type) => (e) => {
     const file = e.target.files[0];

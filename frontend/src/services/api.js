@@ -1,13 +1,15 @@
-const API_URL = import.meta.env.BACKEND_API_URL;
+const API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 export const analyzeResume = async (formData) => {
   try {
+    console.log('Sending request to:', `${API_URL}/analyze`); // Debug log
     const response = await fetch(`${API_URL}/analyze`, {
       method: 'POST',
       body: formData,
     });
 
     const data = await response.json();
+    console.log('Response data:', data); // Debug log
 
     if (!response.ok) {
       throw new Error(data.detail || 'Network response was not ok');

@@ -19,9 +19,17 @@ HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 5000))
 
 # CORS settings
-FRONTEND_URL_DEV = os.getenv("FRONTEND_URL_DEV", "http://localhost:5173")
-FRONTEND_URL_PROD = os.getenv("FRONTEND_URL_PROD", "https://your-production-frontend-url.com")
-CORS_ORIGINS = [FRONTEND_URL_DEV] if ENV == "development" else [FRONTEND_URL_PROD]
+FRONTEND_URL_DEV = os.getenv("FRONTEND_URL_DEV")
+FRONTEND_URL_PROD = os.getenv("FRONTEND_URL_PROD")
+CORS_ORIGINS = []
+
+if FRONTEND_URL_DEV:
+    CORS_ORIGINS.append(FRONTEND_URL_DEV)
+if FRONTEND_URL_PROD:
+    CORS_ORIGINS.append(FRONTEND_URL_PROD)
+
+if not CORS_ORIGINS:
+    raise ValueError("No CORS origins configured. Set FRONTEND_URL_DEV and/or FRONTEND_URL_PROD environment variables.")
 
 app = FastAPI(
     title="Resume Analyzer API",
@@ -29,13 +37,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS
+# Configure CORS with more detailed settings
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 # Directory settings
@@ -117,17 +127,16 @@ async def analyze_resume(
         print("Outer error:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
-def run_server():
-    """Run the FastAPI server"""
-    uvicorn.run(
-        app,
-        host=HOST,
-        port=PORT,
-        reload=ENV == "development"
-    )
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "environment": ENV}
 
 if __name__ == "__main__":
     print("Starting Resume Analyzer API...")
     print(f"Environment: {ENV}")
     print(f"Server running at http://{HOST}:{PORT}")
-    run_server()
+
+    if ENV == "development":
+        os.system(f"uvicorn main:app --host {HOST} --port {PORT} --reload")
+    else:
+        uvicorn.run(app, host=HOST, port=PORT)
