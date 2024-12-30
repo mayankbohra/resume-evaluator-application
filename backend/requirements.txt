@@ -1,0 +1,7 @@
+gunicorn==23.0.0
+uvicorn==0.30.5
+fastapi==0.112.0
+python-multipart==0.0.20
+crewai==0.86.0
+crewai-tools==0.17.0
+python-dotenv==1.0.1
