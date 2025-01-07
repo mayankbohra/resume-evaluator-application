@@ -46,7 +46,7 @@ app.mount("/output", StaticFiles(directory="output"), name="output")
 # Configure CORS with more permissive settings for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend dev server
+    allow_origins=[FRONTEND_URL_DEV, FRONTEND_URL_PROD], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -103,12 +103,18 @@ async def analyze_resume(
                     detail="Failed to generate improved resume"
                 )
 
-            # Read and clean the markdown content
-            with open(markdown_path, 'r') as f:
-                markdown_content = f.read().strip()
-                # Remove markdown code block markers if they exist
-                markdown_content = markdown_content.replace('```markdown\n', '').replace('\n```', '')
-                markdown_content = markdown_content.strip()
+            # Read and clean the markdown content with explicit UTF-8 encoding
+            try:
+                with open(markdown_path, 'r', encoding='utf-8') as f:
+                    markdown_content = f.read().strip()
+            except UnicodeDecodeError:
+                # Fallback to read with different encoding if UTF-8 fails
+                with open(markdown_path, 'r', encoding='latin-1') as f:
+                    markdown_content = f.read().strip()
+
+            # Remove markdown code block markers if they exist
+            markdown_content = markdown_content.replace('```markdown\n', '').replace('\n```', '')
+            markdown_content = markdown_content.strip()
 
             if not markdown_content:
                 raise HTTPException(
@@ -116,26 +122,32 @@ async def analyze_resume(
                     detail="Generated resume is empty"
                 )
 
-            # Save the cleaned markdown content back to the file
-            with open(markdown_path, 'w') as f:
+            # Save the cleaned markdown content back to the file with UTF-8 encoding
+            with open(markdown_path, 'w', encoding='utf-8') as f:
                 f.write(markdown_content)
 
             # Generate PDF from cleaned markdown
             pdf_generator = ResumeGenerator()
             pdf_generated = pdf_generator.generate_pdf(markdown_content)
 
-            # Read the final judgment
-            with open('output/final_judgement.json', 'r') as f:
-                content = f.read().strip()
-                content = content.replace('```json', '').replace('```', '').strip()
-                result = json.loads(content)
+            # Read the final judgment with UTF-8 encoding
+            try:
+                with open('output/final_judgement.json', 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+            except UnicodeDecodeError:
+                # Fallback to read with different encoding if UTF-8 fails
+                with open('output/final_judgement.json', 'r', encoding='latin-1') as f:
+                    content = f.read().strip()
 
-                # Add paths to the response
-                if pdf_generated:
-                    result["improved_resume_path"] = "output/improved_resume.pdf"
-                    result["improved_resume_markdown"] = markdown_content
+            content = content.replace('```json', '').replace('```', '').strip()
+            result = json.loads(content)
 
-                return result
+            # Add paths to the response
+            if pdf_generated:
+                result["improved_resume_path"] = "output/improved_resume.pdf"
+                result["improved_resume_markdown"] = markdown_content
+
+            return result
 
         except Exception as e:
             print("Error during analysis:", str(e))

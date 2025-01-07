@@ -8,14 +8,12 @@ import os
 
 load_dotenv()
 
-# Configure OpenAI
 openai = ChatOpenAI(
     model="gpt-4o",
     temperature=0.7,
     api_key=os.getenv("OPENAI_API_KEY")
 )
 
-# Configure Gemini
 gemini = LLM(
     model="gemini/gemini-2.0-flash-exp",
     api_key=os.getenv("GEMINI_API_KEY")
