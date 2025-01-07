@@ -17,15 +17,18 @@ function App() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Test backend connection
-    fetch(`${import.meta.env.VITE_BACKEND_API_URL}/health`)
-      .then(response => response.json())
-      .then(data => {
+    // Test backend connection on component mount
+    const testConnection = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/health`);
+        const data = await response.json();
         console.log('Backend health check:', data);
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('Backend connection error:', error);
-      });
+      }
+    };
+
+    testConnection();
   }, []);
 
   const handleFileChange = (type) => (e) => {
@@ -139,6 +142,37 @@ function App() {
             ))}
           </ul>
         </div>
+
+        {result?.improved_resume_path && (
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/${result.improved_resume_path}`);
+                  if (!response.ok) throw new Error('Failed to download resume');
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'improved_resume.pdf';
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                  document.body.removeChild(a);
+                } catch (error) {
+                  console.error('Error downloading resume:', error);
+                  alert('Failed to download resume. Please try again.');
+                }
+              }}
+              className={`${primaryButtonClass} px-6 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Download Improved Resume
+            </button>
+          </div>
+        )}
 
         <div className="flex justify-center mt-8">
           <button

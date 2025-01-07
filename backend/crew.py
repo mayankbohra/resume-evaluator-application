@@ -1,18 +1,25 @@
 from crewai import Agent, Crew, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import PDFSearchTool
-
+from utils.pdf_generator import ResumeGenerator
+from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
+# Configure OpenAI
+openai = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0.7,
+    api_key=os.getenv("OPENAI_API_KEY")
+)
+
+# Configure Gemini
 gemini = LLM(
     model="gemini/gemini-2.0-flash-exp",
     api_key=os.getenv("GEMINI_API_KEY")
 )
-
-openai_api_key = os.getenv("OPENAI_API_KEY")
 
 @CrewBase
 class ResumeEvaluationCrew:
@@ -31,6 +38,7 @@ class ResumeEvaluationCrew:
         return Agent(
             config=self.agents_config['job_description_extractor'],
             tools=[PDFSearchTool(pdf=self.jd_path)],
+            llm=openai,
             verbose=False
         )
 
@@ -38,6 +46,7 @@ class ResumeEvaluationCrew:
     def job_description_analyst_agent(self) -> Agent:
         return Agent(
             config=self.agents_config['job_description_analyzer'],
+            llm=openai,
             verbose=False
         )
 
@@ -46,6 +55,7 @@ class ResumeEvaluationCrew:
         return Agent(
             config=self.agents_config['resume_extractor'],
             tools=[PDFSearchTool(pdf=self.resume_path)],
+            llm=openai,
             verbose=False
         )
 
@@ -53,6 +63,7 @@ class ResumeEvaluationCrew:
     def user_input_analyzer_agent(self) -> Agent:
         return Agent(
             config=self.agents_config['user_input_analyzer'],
+            llm=openai,
             verbose=False
         )
 
@@ -60,6 +71,7 @@ class ResumeEvaluationCrew:
     def resume_analyst_agent(self) -> Agent:
         return Agent(
             config=self.agents_config['resume_user_input_analyzer'],
+            llm=openai,
             verbose=False
         )
 
@@ -85,6 +97,14 @@ class ResumeEvaluationCrew:
             config=self.agents_config['user_interface_agent'],
             llm=gemini,
             verbose=False
+        )
+
+    @agent
+    def resume_generator_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['resume_generator_agent'],
+            llm=openai,
+            verbose=True
         )
 
     @task
@@ -174,11 +194,26 @@ class ResumeEvaluationCrew:
             agent=self.user_interface_agent()
         )
 
+    @task
+    def resume_generation_task(self) -> Task:
+        if self.progress_callback:
+            self.progress_callback('Generating improved resume', 9)
+        return Task(
+            config=self.tasks_config['resume_generation_task'],
+            context=[
+                self.resume_analysis_task(),
+                self.evaluation_task(),
+                self.advisor_task()
+            ],
+            output_file='output/improved_resume.md',
+            agent=self.resume_generator_agent()
+        )
+
     @crew
     def crew(self) -> Crew:
         """Creates the Resume Evaluation Crew"""
         return Crew(
             agents=self.agents,
-            tasks=self.tasks,
+            tasks=self.tasks + [self.resume_generation_task()],
             verbose=True,
         )

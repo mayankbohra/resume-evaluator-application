@@ -2,14 +2,18 @@ const API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 export const analyzeResume = async (formData) => {
   try {
-    console.log('Sending request to:', `${API_URL}/analyze`); // Debug log
+    console.log('API URL:', API_URL);
+    console.log('Sending request to:', `${API_URL}/analyze`);
+
     const response = await fetch(`${API_URL}/analyze`, {
       method: 'POST',
       body: formData,
     });
 
+    console.log('Response status:', response.status);
+
     const data = await response.json();
-    console.log('Response data:', data); // Debug log
+    console.log('Response data:', data);
 
     if (!response.ok) {
       throw new Error(data.detail || 'Network response was not ok');
@@ -18,10 +22,6 @@ export const analyzeResume = async (formData) => {
     // Validate the response structure
     if (!data || typeof data !== 'object') {
       throw new Error('Invalid response format');
-    }
-
-    if (!data["Evaluating Score"] || !data["Evaluating Statement"] || !Array.isArray(data.Suggestions)) {
-      throw new Error('Missing required fields in response');
     }
 
     return data;

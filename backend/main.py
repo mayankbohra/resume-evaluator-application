@@ -1,10 +1,12 @@
 from fastapi import FastAPI, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import json
 import os
 import uvicorn
 from crew import ResumeEvaluationCrew
 from dotenv import load_dotenv
+from utils.pdf_generator import ResumeGenerator
 
 # Load environment variables
 load_dotenv()
@@ -12,6 +14,7 @@ load_dotenv()
 # Environment settings
 ENV = os.getenv("ENV", "development")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Server settings
@@ -37,15 +40,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS with more detailed settings
+# Mount the output directory to serve static files (like PDFs)
+app.mount("/output", StaticFiles(directory="output"), name="output")
+
+# Configure CORS with more permissive settings for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=["http://localhost:5173"],  # Frontend dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=3600,
 )
 
 # Directory settings
@@ -79,6 +83,9 @@ async def analyze_resume(
             with open(jd_path, "wb") as f:
                 f.write(await job_description.read())
 
+            # Ensure output directory exists
+            os.makedirs('output', exist_ok=True)
+
             # Run the crew
             crew = ResumeEvaluationCrew(
                 jd_path=jd_path,
@@ -88,29 +95,47 @@ async def analyze_resume(
 
             crew.crew().kickoff()
 
-            # Read the final judgment
-            try:
-                with open(os.path.join(OUTPUT_DIR, 'final_judgement.json'), 'r') as f:
-                    content = f.read().strip()
-                    # Remove the JSON code block markers if they exist
-                    content = content.replace('```json', '').replace('```', '').strip()
-                    result = json.loads(content)
-
-                    # Ensure the required keys exist
-                    if not all(key in result for key in ["Evaluating Score", "Evaluating Statement", "Suggestions"]):
-                        raise HTTPException(
-                            status_code=500,
-                            detail="Invalid response format from analysis"
-                        )
-
-                    return result
-            except json.JSONDecodeError as e:
-                print("JSON Error:", e)
-                print("Content:", content)
+            # Check if markdown file exists
+            markdown_path = 'output/improved_resume.md'
+            if not os.path.exists(markdown_path):
                 raise HTTPException(
                     status_code=500,
-                    detail="Error parsing analysis results"
+                    detail="Failed to generate improved resume"
                 )
+
+            # Read and clean the markdown content
+            with open(markdown_path, 'r') as f:
+                markdown_content = f.read().strip()
+                # Remove markdown code block markers if they exist
+                markdown_content = markdown_content.replace('```markdown\n', '').replace('\n```', '')
+                markdown_content = markdown_content.strip()
+
+            if not markdown_content:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Generated resume is empty"
+                )
+
+            # Save the cleaned markdown content back to the file
+            with open(markdown_path, 'w') as f:
+                f.write(markdown_content)
+
+            # Generate PDF from cleaned markdown
+            pdf_generator = ResumeGenerator()
+            pdf_generated = pdf_generator.generate_pdf(markdown_content)
+
+            # Read the final judgment
+            with open('output/final_judgement.json', 'r') as f:
+                content = f.read().strip()
+                content = content.replace('```json', '').replace('```', '').strip()
+                result = json.loads(content)
+
+                # Add paths to the response
+                if pdf_generated:
+                    result["improved_resume_path"] = "output/improved_resume.pdf"
+                    result["improved_resume_markdown"] = markdown_content
+
+                return result
 
         except Exception as e:
             print("Error during analysis:", str(e))

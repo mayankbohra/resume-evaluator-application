@@ -71,3 +71,23 @@ user_interface_task:
     - "Evaluating Score": Numerical score.
     - "Evaluating Statement": Summary of the evaluation.
     - "Suggestions": Improvement recommendations (in not more than 5 major points).
+
+resume_generation_task:
+  description: >
+    Generate an improved version of the resume in markdown format and save it to 'output/improved_resume.md'.
+    Include all suggested improvements and ensure the format is professional.
+    The resume should be structured with clear sections using markdown syntax:
+    - Professional Summary
+    - Technical Skills
+    - Experience
+    - Projects
+    - Education
+
+    Use proper markdown formatting:
+    - Use # for main headings
+    - Use ## for subheadings
+    - Use bullet points (-)
+    - Use bold (**) and italic (*) where appropriate
+    - Use horizontal rules (---) to separate sections
+  expected_output: >
+    A well structured markdown file that can be converted into a professional PDF resume.
