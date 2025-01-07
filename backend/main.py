@@ -41,12 +41,14 @@ app = FastAPI(
 )
 
 # Mount the output directory to serve static files (like PDFs)
+# Create output directory if it doesn't exist
+os.makedirs("output", exist_ok=True)
 app.mount("/output", StaticFiles(directory="output"), name="output")
 
 # Configure CORS with more permissive settings for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL_DEV, FRONTEND_URL_PROD], 
+    allow_origins=[FRONTEND_URL_DEV, FRONTEND_URL_PROD],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
