@@ -212,6 +212,6 @@ class ResumeEvaluationCrew:
         """Creates the Resume Evaluation Crew"""
         return Crew(
             agents=self.agents,
-            tasks=self.tasks + [self.resume_generation_task()],
+            tasks=self.tasks,
             verbose=True,
         )

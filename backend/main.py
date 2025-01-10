@@ -21,6 +21,15 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 5000))
 
+# Directory settings
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMP_DIR = os.path.join(BASE_DIR, "temp")
+OUTPUT_DIR = os.path.join(BASE_DIR, "output")
+
+# Ensure required directories exist
+os.makedirs(TEMP_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 # CORS settings
 FRONTEND_URL_DEV = os.getenv("FRONTEND_URL_DEV")
 FRONTEND_URL_PROD = os.getenv("FRONTEND_URL_PROD")
@@ -41,9 +50,7 @@ app = FastAPI(
 )
 
 # Mount the output directory to serve static files (like PDFs)
-# Create output directory if it doesn't exist
-os.makedirs("output", exist_ok=True)
-app.mount("/output", StaticFiles(directory="output"), name="output")
+app.mount("/output", StaticFiles(directory=OUTPUT_DIR), name="output")
 
 # Configure CORS with more permissive settings for development
 app.add_middleware(
@@ -53,15 +60,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Directory settings
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMP_DIR = os.path.join(BASE_DIR, "temp")
-OUTPUT_DIR = os.path.join(BASE_DIR, "output")
-
-# Ensure required directories exist
-os.makedirs(TEMP_DIR, exist_ok=True)
-os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 @app.post("/analyze")
 async def analyze_resume(
