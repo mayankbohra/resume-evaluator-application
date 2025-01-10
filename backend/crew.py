@@ -1,7 +1,6 @@
 from crewai import Agent, Crew, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import PDFSearchTool
-from utils.pdf_generator import ResumeGenerator
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 import os

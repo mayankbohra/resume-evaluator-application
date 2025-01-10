@@ -74,20 +74,46 @@ user_interface_task:
 
 resume_generation_task:
   description: >
-    Generate an improved version of the resume in markdown format and save it to 'output/improved_resume.md'.
-    Include all suggested improvements and ensure the format is professional.
-    The resume should be structured with clear sections using markdown syntax:
-    - Professional Summary
-    - Technical Skills
-    - Experience
-    - Projects
-    - Education
+    Generate an improved version of the resume in markdown format.
+    Follow this exact format structure:
+
+    # [Full Name]
+    **E-mail**: [Email]
+    **LinkedIn Id**: [LinkedIn Profile]
+    **Contact No**: [Phone]
+    **DOB**: [DOB]
+    **Address**: [Address]
+
+    Academic Record (in tabular format):
+    Degree | Year of Passing | University/College | CGPA
+
+    Certification (in tabular format):
+    Certification Name | Certification Authority
+
+    Experience (in tabular format), name this section as "Summer Projects":
+    Company Name | Job Title | Employment Period
+    Description | [Description]
+    Learnings | [Learnings] (write in bullet points and add relevant KPIs)
+
+    Projects (in tabular format), name this section as "Other Projects":
+    Project Name | [Project Name]
+    Description | [Description]
+    Learnings | [Learnings] (write in bullet points and add relevant KPIs)
+
+    Achievements (in tabular format), name this section as "Achievements":
+    Write all the achievements in bullet points with proper highlighting.
+
+    Professional Skills (in tabular format), name this section as "Professional Skills":
+    Write all the professional skills in bullet points.
 
     Use proper markdown formatting:
-    - Use # for main headings
-    - Use ## for subheadings
-    - Use bullet points (-)
-    - Use bold (**) and italic (*) where appropriate
-    - Use horizontal rules (---) to separate sections
+    - Use **bold** for emphasis where appropriate
+    - Maintain consistent spacing between sections
+    - Ensure all content is properly aligned
+    - Ensure all content fits on a single A4 page
+    - Format metrics and numbers consistently
+    - Keep descriptions concise but impactful
+    - Include all dates and durations in a consistent format
   expected_output: >
-    A well structured markdown file that can be converted into a professional PDF resume.
+    A professionally formatted markdown file that exactly matches the specified template
+    and structure, ensuring all content fits on a single A4 page when converted to PDF.

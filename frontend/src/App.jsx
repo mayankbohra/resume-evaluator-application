@@ -113,6 +113,26 @@ function App() {
   const primaryButtonClass = `${buttonBaseClass} bg-primary-600 text-white hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`;
   const secondaryButtonClass = `${buttonBaseClass} bg-secondary-100 text-secondary-700 hover:bg-secondary-200 focus:ring-2 focus:ring-secondary-300 focus:ring-offset-2`;
 
+  const handleDownloadResume = async (resumePath) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/${resumePath}`);
+      if (!response.ok) throw new Error('Failed to download resume');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'improved_resume.docx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading resume:', error);
+      alert('Failed to download resume. Please try again.');
+    }
+  };
+
   const renderResults = () => {
     if (error) {
       return (
@@ -177,27 +197,10 @@ function App() {
           </ul>
         </div>
 
-        {result?.improved_resume_path && (
+        {result?.resume_path && (
           <div className="flex justify-center mt-4">
             <button
-              onClick={async () => {
-                try {
-                  const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/${result.improved_resume_path}`);
-                  if (!response.ok) throw new Error('Failed to download resume');
-                  const blob = await response.blob();
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'improved_resume.pdf';
-                  document.body.appendChild(a);
-                  a.click();
-                  window.URL.revokeObjectURL(url);
-                  document.body.removeChild(a);
-                } catch (error) {
-                  console.error('Error downloading resume:', error);
-                  alert('Failed to download resume. Please try again.');
-                }
-              }}
+              onClick={() => handleDownloadResume(result.resume_path)}
               className={`${primaryButtonClass} px-6 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
@@ -443,26 +446,9 @@ function App() {
 
               {/* Download Section */}
               <div className="lg:col-span-2 flex justify-center mt-6">
-                {result?.improved_resume_path && (
+                {result?.resume_path && (
                   <button
-                    onClick={async () => {
-                      try {
-                        const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/${result.improved_resume_path}`);
-                        if (!response.ok) throw new Error('Failed to download resume');
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'improved_resume.pdf';
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                        document.body.removeChild(a);
-                      } catch (error) {
-                        console.error('Error downloading resume:', error);
-                        alert('Failed to download resume. Please try again.');
-                      }
-                    }}
+                    onClick={() => handleDownloadResume(result.resume_path)}
                     className={`${primaryButtonClass} px-8 py-3 rounded-lg text-sm font-medium flex items-center gap-2 transform hover:scale-105 transition-all duration-300`}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">

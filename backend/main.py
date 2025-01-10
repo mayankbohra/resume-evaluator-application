@@ -6,7 +6,8 @@ import os
 import uvicorn
 from crew import ResumeEvaluationCrew
 from dotenv import load_dotenv
-from utils.pdf_generator import ResumeGenerator
+from spire.doc import Document, FileFormat
+from pathlib import Path
 
 # Load environment variables
 load_dotenv()
@@ -60,6 +61,43 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+def convert_markdown_to_docx(markdown_file, output_filename):
+    """Convert markdown file to docx and save to outputs/doc"""
+    try:
+        # Setup output directory
+        doc_dir = Path('output/doc')
+        doc_dir.mkdir(exist_ok=True)
+        output_path = doc_dir / output_filename
+
+        # Read and clean markdown content
+        with open(markdown_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            if content.startswith('```markdown\n'):
+                content = content[len('```markdown\n'):]
+            if content.endswith('\n```'):
+                content = content[:-4]
+
+        # Write cleaned content to temporary file
+        temp_md = Path('output/temp.md')
+        with open(temp_md, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+        doc = Document()
+        doc.LoadFromFile(str(temp_md))
+        doc.SaveToFile(str(output_path), FileFormat.Docx2016)
+        doc.Dispose()
+
+        # Clean up temp file
+        temp_md.unlink()
+
+        print(f"✓ Saved to: {output_path}")
+
+        return True
+
+    except Exception as e:
+        print(f"Error converting {markdown_file}: {str(e)}")
+        return None
 
 @app.post("/analyze")
 async def analyze_resume(
@@ -127,8 +165,7 @@ async def analyze_resume(
                 f.write(markdown_content)
 
             # Generate PDF from cleaned markdown
-            pdf_generator = ResumeGenerator()
-            pdf_generated = pdf_generator.generate_pdf(markdown_content)
+            doc_generated = convert_markdown_to_docx(markdown_path, 'improved_resume.docx')
 
             # Read the final judgment with UTF-8 encoding
             try:
@@ -142,10 +179,8 @@ async def analyze_resume(
             content = content.replace('```json', '').replace('```', '').strip()
             result = json.loads(content)
 
-            # Add paths to the response
-            if pdf_generated:
-                result["improved_resume_path"] = "output/improved_resume.pdf"
-                result["improved_resume_markdown"] = markdown_content
+            if doc_generated:
+                result["resume_path"] = "output/doc/improved_resume.docx"
 
             return result
 
